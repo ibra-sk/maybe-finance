@@ -41,6 +41,14 @@ class StatementImport::FolderTest < ActiveSupport::TestCase
     assert_empty @family.imports.reload
   end
 
+  test "imports PDF statements" do
+    StatementImport::PdfText.stubs(:extract).returns(file_fixture("statements/triangle.txt").read)
+    drop "triangle.qfx", as: "ctfs_statement.pdf", content: "%PDF-1.7 fake"
+
+    assert_equal({ "ctfs_statement.pdf" => :imported }, @folder.import_all)
+    assert_equal [ "Triangle Mastercard ••4321" ], @family.accounts.pluck(:name)
+  end
+
   test "ignores other files and ones still being written" do
     drop "notes.txt", content: "hello"
     drop "rbc_chequing.qfx", age: 0.seconds

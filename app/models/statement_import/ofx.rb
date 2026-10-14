@@ -4,7 +4,7 @@
 # Handles both OFX 1.x (SGML, leaf tags left unclosed) and OFX 2.x (XML) by reading each
 # leaf value up to the next tag or line break.
 class StatementImport::Ofx
-  ParseError = Class.new(StandardError)
+  ParseError = StatementImport::ParseError
 
   Transaction = Data.define(:date, :amount, :name, :memo)
 

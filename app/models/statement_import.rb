@@ -1,19 +1,28 @@
-# Imports an OFX/QFX statement downloaded from a bank (TD, RBC, CIBC, ...) into one account.
+# Imports a bank statement into one account: an OFX/QFX download (most banks) or a PDF
+# statement (TD and Triangle Mastercard layouts, see StatementImport::Pdf).
 #
 # Unlike a CSV import there is no column configuration: the file is parsed into rows on
 # upload, transactions already in the account are skipped, and on publish the account
 # balance is set from the statement's closing (ledger) balance.
 class StatementImport < TransactionImport
+  ParseError = Class.new(StandardError)
+
   attr_reader :skipped_count
 
   def statement
-    @statement ||= Ofx.new(raw_file_str)
+    @statement ||= raw_file_str.match?(Pdf::FILE_NAME_LINE) ? Pdf.new(raw_file_str) : Ofx.new(raw_file_str)
   end
 
-  # Raises StatementImport::Ofx::ParseError for files that can't be read
-  def upload_statement!(raw, account: nil)
-    raw = Ofx.to_utf8(raw)
-    @statement = Ofx.new(raw)
+  # Accepts an OFX/QFX file or a PDF statement. Raises StatementImport::ParseError for files
+  # that can't be read. The file name helps identify the account for PDF statements.
+  def upload_statement!(raw, account: nil, file_name: nil)
+    if raw.to_s.start_with?("%PDF")
+      raw = Pdf.with_file_name(PdfText.extract(raw), file_name)
+      @statement = Pdf.new(raw)
+    else
+      raw = Ofx.to_utf8(raw)
+      @statement = Ofx.new(raw)
+    end
 
     assign_attributes(
       raw_file_str: raw,
@@ -174,6 +183,6 @@ class StatementImport < TransactionImport
 
   protected
     def statement_key
-      [ statement.bank, statement.account_id ]
+      [ statement.bank, statement.account_id.presence || statement.account_label ]
     end
 end

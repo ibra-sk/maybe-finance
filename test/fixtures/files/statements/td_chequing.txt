@@ -1,0 +1,22 @@
+         Statement of Account                                            Account Type                                       Statement From To
+    Branch No.                Account No.                                                                                APR 30/26 - MAY 29/26
+                                                                           UNLIMITED CHEQUING
+
+              Description                              Withdrawals                          Deposits                   Date                Balance
+ STARTING BALANCE                                                                                                     APR30                       500.00
+ COFFEE SHOP #12 _F                                                       4.50                                        MAY02
+ GROCERY STORE    _F                                                     95.50                                        MAY02                       400.00
+ PAYROLL DEPOSIT ACME                                                                                 1,000.00        MAY15                     1,400.00
+ Total                                                                  100.00                        1,000.00
+
+Page 2
+
+         Statement of Account                                            Account Type                                       Statement From To
+    Branch No.                Account No.                                                                                APR 30/26 - MAY 29/26
+                                                                           UNLIMITED CHEQUING
+
+              Description                              Withdrawals                          Deposits                   Date                Balance
+ BALANCE FORWARD                                                                                                      MAY15                     1,400.00
+ MONTHLY ACCOUNT FEE                                                     15.95                                        MAY29                     1,384.05
+ CLOSING BALANCE                                                                                                      MAY29                     1,384.05
+ Total                                                                   15.95                            0.00

@@ -1,4 +1,4 @@
-# Imports QFX/OFX statements dropped into a folder (STATEMENT_IMPORT_DIR), so downloading
+# Imports QFX/OFX and PDF statements dropped into a folder (STATEMENT_IMPORT_DIR), so downloading
 # "transactions" from online banking is all it takes to update MacroFinance.
 #
 # Each file is claimed by moving it into processing/, then filed under:
@@ -6,7 +6,7 @@
 #   needs-review/  some rows are invalid; the pending import is waiting under Settings > Imports
 #   failed/        unreadable file or import error (see the log)
 class StatementImport::Folder
-  EXTENSIONS = %w[.qfx .ofx].freeze
+  EXTENSIONS = %w[.qfx .ofx .pdf].freeze
 
   # Skip files modified this recently, which may still be downloading
   SETTLE_TIME = 10.seconds
@@ -43,7 +43,7 @@ class StatementImport::Folder
 
     def import_file(file)
       import = family.imports.create!(type: "StatementImport")
-      import.upload_statement!(File.binread(file))
+      import.upload_statement!(File.binread(file), file_name: File.basename(file))
 
       if import.rows.empty?
         import.destroy!
@@ -57,7 +57,7 @@ class StatementImport::Folder
         file_away(file, "imported", :imported)
       end
     rescue => error
-      import&.destroy if error.is_a?(StatementImport::Ofx::ParseError)
+      import&.destroy if error.is_a?(StatementImport::ParseError)
       Rails.logger.error("Statement folder import failed for #{File.basename(file)}: #{error.message}")
       file_away(file, "failed", :failed)
     end

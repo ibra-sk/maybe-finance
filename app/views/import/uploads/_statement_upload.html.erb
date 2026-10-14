@@ -5,8 +5,8 @@
     <h1 class="text-3xl text-primary font-medium">Upload bank statement</h1>
     <p class="text-secondary text-sm">
       In your bank's online banking, open the account and choose <strong>Download transactions</strong>
-      in <strong>Quicken (QFX)</strong> or <strong>Microsoft Money (OFX)</strong> format.
-      Works with TD, RBC, CIBC and most other banks.
+      in <strong>Quicken (QFX)</strong> or <strong>Microsoft Money (OFX)</strong> format (works with most banks),
+      or upload a monthly <strong>PDF statement</strong> from TD (chequing, savings, credit cards) or the Triangle Mastercard.
     </p>
   </div>
 
@@ -20,7 +20,7 @@
         <div data-file-upload-target="uploadText" class="flex flex-col items-center">
           <%= icon("plus", size: "lg", class: "mb-4 mx-auto") %>
           <p class="mb-2 text-md text-gray text-center">
-            <span class="font-medium text-primary">Browse</span> to add your .qfx or .ofx file
+            <span class="font-medium text-primary">Browse</span> to add your .qfx, .ofx or .pdf file
           </p>
         </div>
 
@@ -31,7 +31,7 @@
           <p class="text-md font-medium text-primary"></p>
         </div>
 
-        <%= form.file_field :statement_file, accept: ".qfx,.ofx", class: "hidden", "data-file-upload-target": "input" %>
+        <%= form.file_field :statement_file, accept: ".qfx,.ofx,.pdf", class: "hidden", "data-file-upload-target": "input" %>
       </div>
     </div>
 

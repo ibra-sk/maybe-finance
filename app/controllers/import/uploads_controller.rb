@@ -34,7 +34,7 @@ class Import::UploadsController < ApplicationController
       file = params.dig(:import, :statement_file)
       account = Current.family.accounts.find_by(id: params.dig(:import, :account_id))
 
-      @import.upload_statement!(file&.read.to_s, account: account)
+      @import.upload_statement!(file&.read.to_s, account: account, file_name: file&.original_filename)
 
       if @import.rows.empty?
         flash.now[:alert] = "All #{@import.statement_transaction_count} transactions in this file are already imported."
@@ -46,7 +46,7 @@ class Import::UploadsController < ApplicationController
       notice += @import.account ? ". Importing into #{@import.account.name}." : ". A new account \"#{@import.statement.account_label}\" will be created."
 
       redirect_to import_clean_path(@import), notice: notice
-    rescue StatementImport::Ofx::ParseError => e
+    rescue StatementImport::ParseError => e
       flash.now[:alert] = e.message
       render :show, status: :unprocessable_entity
     end

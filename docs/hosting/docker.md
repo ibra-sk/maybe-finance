@@ -138,7 +138,9 @@ If you find bugs or have a feature request, be sure to read through our [contrib
 ## Auto-import bank statements
 
 MacroFinance can import QFX/OFX statements (the "Quicken" or "Microsoft Money" download in
-TD, RBC, CIBC and most other banks' online banking) as soon as they land in a folder.
+most banks' online banking) and PDF statements from TD (chequing, savings, credit cards) and
+the Triangle Mastercard as soon as they land in a folder. PDF statements must add up (opening
+balance plus transactions equals closing balance) or they go to `failed/`.
 
 1. In `compose.yml`, uncomment the `volumes` and `STATEMENT_IMPORT_DIR` lines under `worker`.
 2. Create the folder next to `compose.yml` with `mkdir statements` and restart with `docker compose up -d`.

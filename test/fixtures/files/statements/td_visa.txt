@@ -1,0 +1,12 @@
+    TD REWARDS CARD
+
+    STATEMENT DATE: January 19, 2026                                         1 OF 3
+    STATEMENT PERIOD: December 20, 2025 to January 19, 2026
+
+    DATE        DATE           ACTIVITY DESCRIPTION                        AMOUNT($)   Minimum Payment                                 $10.00
+                               PREVIOUS STATEMENT BALANCE      $200.00
+    DEC 28       DEC 29        BOOKSTORE 416-555-0100                      $45.25   Annual Interest Rate: Purchases        19.99%
+    JAN 2        JAN 3         PAYMENT - THANK YOU                       -$100.00
+    JAN 19       JAN 19        ANNUAL FEE JAN 19, 2026                     $29.00
+                               TOTAL NEW BALANCE               $174.25
+                                                                                       NEW BALANCE                                    $174.25

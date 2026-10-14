@@ -51,6 +51,23 @@ class StatementImportTest < ActiveSupport::TestCase
     assert_empty account.entries.reload
   end
 
+  test "imports a PDF statement and matches later ones to the same account" do
+    StatementImport::PdfText.stubs(:extract).returns(file_fixture("statements/td_chequing.txt").read)
+    file_name = "TD_UNLIMITED_CHEQUING_ACCOUNT_1234-5678901_Apr_30-May_29_2026.pdf"
+
+    first = upload_pdf(file_name)
+    first.publish
+
+    assert first.complete?, first.error
+    assert_equal "TD Chequing ••8901", first.account.name
+    assert_equal "checking", first.account.subtype
+    assert_equal BigDecimal("1384.05"), materialized_balance(first.account)
+
+    second = upload_pdf(file_name)
+    assert_equal first.account, second.account
+    assert_empty second.rows
+  end
+
   test "a later statement for the same bank account goes into the same account" do
     first = upload("rbc_chequing.qfx")
     first.publish
@@ -62,6 +79,12 @@ class StatementImportTest < ActiveSupport::TestCase
   end
 
   private
+    def upload_pdf(file_name)
+      import = @family.imports.create!(type: "StatementImport")
+      import.upload_statement!("%PDF-1.7 fake", file_name: file_name)
+      import
+    end
+
     def upload(file, account: nil)
       import = @family.imports.create!(type: "StatementImport")
       import.upload_statement!(file_fixture("statements/#{file}").read, account: account)
