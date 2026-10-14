@@ -66,11 +66,15 @@ services:
     image: ghcr.io/maybe-finance/maybe:latest
     command: bundle exec sidekiq
     restart: unless-stopped
+    # Uncomment to auto-import QFX/OFX bank statements dropped into ./statements
+    # volumes:
+    #   - ./statements:/statements
     depends_on:
       redis:
         condition: service_healthy
     environment:
       <<: *rails_env
+      # STATEMENT_IMPORT_DIR: /statements
     networks:
       - maybe_net
 

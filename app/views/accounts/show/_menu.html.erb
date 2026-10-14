@@ -13,6 +13,16 @@
     ) %>
   <% end %>
 
+  <% if (account.depository? || account.credit_card?) && !account.linked? %>
+    <% menu.with_item(
+      variant: "button",
+      text: "Import bank statement",
+      href: imports_path(import: { type: "StatementImport", account_id: account.id }),
+      icon: "landmark",
+      data: { turbo: false }
+    ) %>
+  <% end %>
+
   <% unless account.linked? %>
     <% menu.with_item(
       variant: "button",

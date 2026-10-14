@@ -1,7 +1,7 @@
 class Import < ApplicationRecord
   MaxRowCountExceededError = Class.new(StandardError)
 
-  TYPES = %w[TransactionImport TradeImport AccountImport MintImport].freeze
+  TYPES = %w[TransactionImport TradeImport AccountImport MintImport StatementImport].freeze
   SIGNAGE_CONVENTIONS = %w[inflows_positive inflows_negative]
   SEPARATORS = [ [ "Comma (,)", "," ], [ "Semicolon (;)", ";" ] ].freeze
 
@@ -173,6 +173,11 @@ class Import < ApplicationRecord
 
   def mapping_steps
     []
+  end
+
+  # Statement imports are parsed straight from the file, with no column configuration step
+  def configurable?
+    true
   end
 
   def uploaded?

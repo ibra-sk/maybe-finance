@@ -1,0 +1,80 @@
+require "test_helper"
+
+class StatementImportTest < ActiveSupport::TestCase
+  setup do
+    @family = Family.create!(name: "Statement family", currency: "CAD")
+  end
+
+  test "creates the account and sets its balance from the statement" do
+    import = upload("rbc_chequing.qfx")
+    import.publish
+
+    assert import.complete?, import.error
+    account = import.account
+    assert_equal "RBC Chequing ••1234", account.name
+    assert_equal "checking", account.subtype
+    assert_equal 3, account.entries.transactions.count
+    assert_equal BigDecimal("4.85"), account.entries.transactions.order(:date).first.amount # outflow
+
+    assert_equal BigDecimal("3140.30"), materialized_balance(account)
+  end
+
+  test "credit card balances owed become a positive liability" do
+    import = upload("cibc_visa.qfx")
+    import.publish
+
+    assert import.complete?, import.error
+    assert_instance_of CreditCard, import.account.accountable
+    assert_equal BigDecimal("523.10"), materialized_balance(import.account)
+  end
+
+  test "skips transactions already in the account, keeping same-day duplicates" do
+    account = create_account
+    account.entries.create!(date: Date.new(2024, 1, 5), amount: 4.85, currency: "CAD", name: "TIM HORTONS #1234", entryable: Transaction.new)
+
+    import = upload("rbc_chequing.qfx", account: account)
+
+    assert_equal 1, import.skipped_count
+    assert_equal [ "PAYROLL DEPOSIT", "TIM HORTONS #1234" ], import.rows.pluck(:name).sort
+  end
+
+  test "reconciles an existing account to the statement balance, and revert removes it" do
+    account = create_account
+    import = upload("rbc_chequing.qfx", account: account)
+    import.publish
+
+    valuation = account.entries.valuations.find_by!(date: Date.new(2024, 1, 31))
+    assert_equal BigDecimal("3140.30"), valuation.amount
+    assert_equal import, valuation.import
+
+    import.revert
+    assert_empty account.entries.reload
+  end
+
+  test "a later statement for the same bank account goes into the same account" do
+    first = upload("rbc_chequing.qfx")
+    first.publish
+
+    second = upload("rbc_chequing.qfx")
+
+    assert_equal first.account, second.account
+    assert_empty second.rows # everything was imported already
+  end
+
+  private
+    def upload(file, account: nil)
+      import = @family.imports.create!(type: "StatementImport")
+      import.upload_statement!(file_fixture("statements/#{file}").read, account: account)
+      import
+    end
+
+    def create_account
+      @family.accounts.create!(name: "My RBC", balance: 0, currency: "CAD", accountable: Depository.new)
+    end
+
+    def materialized_balance(account)
+      account.reload # classification is computed by the database
+      Balance::Materializer.new(account, strategy: :forward).materialize_balances
+      account.reload.balance
+    end
+end

@@ -18,3 +18,9 @@ run_security_health_checks:
   class: "SecurityHealthCheckJob"
   queue: "scheduled"
   description: "Runs security health checks to detect issues with security data"
+
+import_statement_folder:
+  cron: "* * * * *" # every minute
+  class: "StatementFolderImportJob"
+  queue: "scheduled"
+  description: "Imports QFX/OFX bank statements dropped into STATEMENT_IMPORT_DIR"

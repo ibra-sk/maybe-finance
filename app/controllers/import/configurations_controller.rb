@@ -2,6 +2,7 @@ class Import::ConfigurationsController < ApplicationController
   layout "imports"
 
   before_action :set_import
+  before_action -> { redirect_to import_upload_path(@import) unless @import.configurable? }
 
   def show
   end
