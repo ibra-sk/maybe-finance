@@ -5,6 +5,7 @@ class Security < ApplicationRecord
 
   has_many :trades, dependent: :nullify, class_name: "Trade"
   has_many :prices, dependent: :destroy
+  has_many :watchlist_items, dependent: :destroy
 
   validates :ticker, presence: true
   validates :ticker, uniqueness: { scope: :exchange_operating_mic, case_sensitive: false }
@@ -18,7 +19,7 @@ class Security < ApplicationRecord
   end
 
   def to_combobox_option
-    SynthComboboxOption.new(
+    ComboboxOption.new(
       symbol: ticker,
       name: name,
       logo_url: logo_url,

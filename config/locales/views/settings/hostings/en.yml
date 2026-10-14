@@ -3,7 +3,7 @@ en:
   settings:
     hostings:
       invite_code_settings:
-        description: Every new user that joins your instance of Maybe can only do
+        description: Every new user that joins your instance of MacroFinance can only do
           so via an invite code
         email_confirmation_description: When enabled, users must confirm their email
           address when changing it.
@@ -12,7 +12,6 @@ en:
         generated_tokens: Generated codes
         title: Require invite code for signup
       show:
-        general: General Settings
         invites: Invite Codes
         title: Self-Hosting
         danger_zone: Danger Zone
@@ -21,13 +20,6 @@ en:
         confirm_clear_cache:
           title: Clear data cache?
           body: Are you sure you want to clear the data cache? This will remove all exchange rates, security prices, account balances, and other data. This action cannot be undone.
-      synth_settings:
-        api_calls_used: "%{used} / %{limit} API calls used (%{percentage})"
-        description: Input the API key provided by Synth
-        label: API Key
-        placeholder: Enter your API key here
-        plan: "%{plan} plan"
-        title: Synth Settings
       update:
         failure: Invalid setting value
         success: Settings updated

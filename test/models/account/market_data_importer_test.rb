@@ -18,7 +18,6 @@ class Account::MarketDataImporterTest < ActiveSupport::TestCase
     @provider = mock("provider")
     Provider::Registry.any_instance
                       .stubs(:get_provider)
-                      .with(:synth)
                       .returns(@provider)
   end
 

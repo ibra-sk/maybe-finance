@@ -6,13 +6,13 @@
   { name: "Clean", path: import_clean_path(import), is_complete: import.cleaned?, step_number: 3 },
   { name: "Map", path: import_confirm_path(import), is_complete: import.publishable?, step_number: 4 },
   { name: "Confirm", path: import_path(import), is_complete: import.complete?, step_number: 5 }
-].reject { |step| step[:name] == "Map" && import.mapping_steps.empty? } %>
+].reject { |step| (step[:name] == "Map" && import.mapping_steps.empty?) || (step[:name] == "Configure" && !import.configurable?) } %>
 
 <% content_for :mobile_import_progress do %>
   <% active_step = steps.detect { |s| request.path.eql?(s[:path]) } %>
   <% if active_step.present? %>
     <div class="md:hidden text-center text-secondary text-md my-2">
-      <span class="text-gray-500">Step <%= active_step[:step_number] %> of <%= steps.size %></span>
+      <span class="text-gray-500">Step <%= steps.index(active_step) + 1 %> of <%= steps.size %></span>
     </div>
   <% end %>
 <% end %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_24_115507) do
+ActiveRecord::Schema[7.2].define(version: 2026_10_14_190000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -29,7 +29,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_24_115507) do
     t.uuid "accountable_id"
     t.decimal "balance", precision: 19, scale: 4
     t.string "currency"
-    t.virtual "classification", type: :string, as: "\nCASE\n    WHEN ((accountable_type)::text = ANY ((ARRAY['Loan'::character varying, 'CreditCard'::character varying, 'OtherLiability'::character varying])::text[])) THEN 'liability'::text\n    ELSE 'asset'::text\nEND", stored: true
+    t.virtual "classification", type: :string, as: "\nCASE\n    WHEN ((accountable_type)::text = ANY (ARRAY[('Loan'::character varying)::text, ('CreditCard'::character varying)::text, ('OtherLiability'::character varying)::text])) THEN 'liability'::text\n    ELSE 'asset'::text\nEND", stored: true
     t.uuid "import_id"
     t.uuid "plaid_account_id"
     t.decimal "cash_balance", precision: 19, scale: 4, default: "0.0"
@@ -824,6 +824,19 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_24_115507) do
     t.jsonb "locked_attributes", default: {}
   end
 
+  create_table "watchlist_items", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "family_id", null: false
+    t.uuid "security_id", null: false
+    t.decimal "buy_below", precision: 19, scale: 4
+    t.decimal "sell_above", precision: 19, scale: 4
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["family_id", "security_id"], name: "index_watchlist_items_on_family_id_and_security_id", unique: true
+    t.index ["family_id"], name: "index_watchlist_items_on_family_id"
+    t.index ["security_id"], name: "index_watchlist_items_on_security_id"
+  end
+
   add_foreign_key "accounts", "families"
   add_foreign_key "accounts", "imports"
   add_foreign_key "accounts", "plaid_accounts"
@@ -876,4 +889,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_24_115507) do
   add_foreign_key "transfers", "transactions", column: "outflow_transaction_id", on_delete: :cascade
   add_foreign_key "users", "chats", column: "last_viewed_chat_id"
   add_foreign_key "users", "families"
+  add_foreign_key "watchlist_items", "families"
+  add_foreign_key "watchlist_items", "securities"
 end

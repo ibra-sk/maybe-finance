@@ -1,0 +1,52 @@
+<%# locals: (stock:) %>
+
+<%= link_to stock_path(stock), class: "grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm hover:bg-container-hover first:rounded-t-lg last:rounded-b-lg" do %>
+  <div class="col-span-3 flex items-center gap-3 min-w-0">
+    <%= render DS::FilledIcon.new(variant: :text, text: stock.ticker, size: "md", rounded: true) %>
+
+    <div class="min-w-0">
+      <div class="flex items-center gap-2">
+        <p class="font-medium text-primary"><%= stock.ticker %></p>
+        <% if stock.exchange_operating_mic %>
+          <span class="text-xs text-secondary"><%= stock.exchange_operating_mic %></span>
+        <% end %>
+        <%= render "stocks/target_badge", stock: stock %>
+      </div>
+      <p class="text-xs text-secondary truncate"><%= stock.name %></p>
+    </div>
+  </div>
+
+  <p class="col-span-2 justify-self-end font-medium text-primary font-mono">
+    <%= stock.price&.format || "—" %>
+  </p>
+
+  <div class="col-span-2 justify-self-end text-right font-mono">
+    <% if (change = stock.day_change) %>
+      <p style="color: <%= change.color %>"><%= change.percent_formatted %></p>
+      <p class="text-xs text-secondary"><%= change.value.format %></p>
+    <% else %>
+      <p class="text-secondary">—</p>
+    <% end %>
+  </div>
+
+  <div class="col-span-1 w-full h-6">
+    <% if (series = stock.sparkline_series) %>
+      <%= render "shared/sparkline", id: "sparkline_#{stock.to_param}", series: series %>
+    <% end %>
+  </div>
+
+  <div class="col-span-2 px-2">
+    <%= render "stocks/year_range", stock: stock, compact: true %>
+  </div>
+
+  <div class="col-span-2 justify-self-end text-right">
+    <% if stock.owned? %>
+      <p class="font-medium text-primary font-mono"><%= stock.market_value.format %></p>
+      <p class="text-xs font-mono" style="color: <%= stock.gain.color %>">
+        <%= number_with_delimiter(stock.shares.round(4)) %> sh · <%= stock.gain.percent_formatted %>
+      </p>
+    <% else %>
+      <p class="text-xs text-secondary">Watching</p>
+    <% end %>
+  </div>
+<% end %>

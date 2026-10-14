@@ -1,0 +1,146 @@
+<% stock = @stock %>
+
+<div class="space-y-4 pb-20">
+  <header class="flex flex-wrap justify-between items-start gap-4">
+    <div class="flex items-center gap-3">
+      <%= render DS::FilledIcon.new(variant: :text, text: stock.ticker, size: "lg", rounded: true) %>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-medium text-primary"><%= stock.ticker %></h1>
+          <% if stock.exchange_operating_mic %>
+            <span class="text-xs text-secondary"><%= stock.exchange_operating_mic %></span>
+          <% end %>
+          <%= render "stocks/target_badge", stock: stock %>
+        </div>
+        <p class="text-sm text-secondary"><%= stock.name %></p>
+      </div>
+    </div>
+
+    <% if stock.watched? %>
+      <%= render DS::Button.new(text: "Remove from watchlist", icon: "eye-off", variant: "outline", href: stock_path(stock), method: :delete) %>
+    <% else %>
+      <%= render DS::Button.new(text: "Add to watchlist", icon: "eye", variant: "outline", href: stocks_path(ticker: [ stock.ticker, stock.exchange_operating_mic ].join("|"))) %>
+    <% end %>
+  </header>
+
+  <div class="bg-container shadow-border-xs rounded-xl space-y-2">
+    <div class="flex justify-between flex-col-reverse lg:flex-row gap-2 px-4 pt-4">
+      <div class="space-y-1">
+        <p class="text-3xl font-medium text-primary"><%= stock.price&.format || "No price yet" %></p>
+        <% if stock.day_change %>
+          <%= render "shared/trend_change", trend: stock.day_change, comparison_label: "today" %>
+        <% end %>
+        <% if stock.price_as_of %>
+          <p class="text-xs text-secondary">As of <%= l(stock.price_as_of.to_date, format: :long) %> · delayed up to 15 minutes</p>
+        <% end %>
+      </div>
+
+      <%= form_with url: stock_path(stock), method: :get, data: { controller: "auto-submit-form" } do |form| %>
+        <%= form.select :period,
+                        [ [ "1M", "last_30_days" ], [ "3M", "last_90_days" ], [ "YTD", "current_year" ], [ "1Y", "last_365_days" ], [ "5Y", "last_5_years" ] ],
+                        { selected: @period.key },
+                        data: { "auto-submit-form-target": "auto" },
+                        class: "bg-container border border-secondary rounded-lg px-3 py-2 text-sm pr-7 cursor-pointer text-primary focus:outline-hidden focus:ring-0" %>
+      <% end %>
+    </div>
+
+    <% series = stock.price_series(@period) %>
+    <% if series %>
+      <div class="px-4">
+        <%= render "shared/trend_change", trend: series.trend, comparison_label: @period.comparison_label %>
+      </div>
+    <% end %>
+
+    <div class="h-64 pb-4">
+      <% if series %>
+        <div id="stockChart" class="w-full h-full" data-controller="time-series-chart" data-time-series-chart-data-value="<%= series.to_json %>"></div>
+      <% else %>
+        <div class="w-full h-full flex items-center justify-center">
+          <p class="text-secondary text-sm">Price history is loading. Check back in a minute.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+    <% [
+      [ "Previous close", stock.previous_close&.format ],
+      [ "Day range", stock.day_range&.map(&:format)&.join(" – ") ],
+      [ "Volume", stock.volume && number_with_delimiter(stock.volume) ]
+    ].each do |label, value| %>
+      <div class="bg-container shadow-border-xs rounded-xl p-4 space-y-1">
+        <p class="text-xs text-secondary"><%= label %></p>
+        <p class="text-sm font-medium text-primary font-mono"><%= value || "—" %></p>
+      </div>
+    <% end %>
+
+    <div class="bg-container shadow-border-xs rounded-xl p-4 space-y-2">
+      <p class="text-xs text-secondary">52-week range</p>
+      <%= render "stocks/year_range", stock: stock %>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-2 gap-4 items-start">
+    <section class="bg-container shadow-border-xs rounded-xl p-4 space-y-3">
+      <h2 class="font-medium text-primary">Your position</h2>
+
+      <% if stock.owned? %>
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <p class="text-xs text-secondary">Shares</p>
+            <p class="text-sm font-medium font-mono"><%= number_with_delimiter(stock.shares.round(4)) %></p>
+          </div>
+          <div>
+            <p class="text-xs text-secondary">Market value</p>
+            <p class="text-sm font-medium font-mono"><%= stock.market_value.format %></p>
+          </div>
+          <div>
+            <p class="text-xs text-secondary">Total return</p>
+            <%= render "shared/trend_change", trend: stock.gain %>
+          </div>
+        </div>
+
+        <ul class="divide-y divide-alpha-black-200 theme-dark:divide-alpha-white-200 text-sm">
+          <% stock.holdings.each do |holding| %>
+            <li class="flex justify-between py-2">
+              <%= link_to holding.account.name, account_path(holding.account, tab: "holdings"), class: "text-primary hover:underline" %>
+              <span class="font-mono text-secondary"><%= number_with_delimiter(holding.qty.round(4)) %> sh · <%= holding.amount_money.format %></span>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="text-sm text-secondary">You don't hold this stock in any account.</p>
+      <% end %>
+
+      <% trades = stock.trades.limit(10) %>
+      <% if trades.any? %>
+        <h3 class="text-sm font-medium text-primary pt-2">Recent trades</h3>
+        <ul class="divide-y divide-alpha-black-200 theme-dark:divide-alpha-white-200 text-sm">
+          <% trades.each do |entry| %>
+            <li class="flex justify-between gap-2 py-2">
+              <span class="text-secondary"><%= l(entry.date, format: :long) %></span>
+              <span class="text-primary truncate"><%= entry.name %></span>
+              <span class="text-secondary truncate"><%= entry.account.name %></span>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
+
+    <section class="bg-container shadow-border-xs rounded-xl p-4 space-y-3">
+      <div>
+        <h2 class="font-medium text-primary">Targets and notes</h2>
+        <p class="text-xs text-secondary">A badge shows on the watchlist when the price reaches a target. Prices in <%= stock.currency %>.</p>
+      </div>
+
+      <%= styled_form_with model: stock.watchlist_item || WatchlistItem.new, scope: :watchlist_item, url: stock_path(stock), method: :patch, class: "space-y-3" do |form| %>
+        <div class="grid grid-cols-2 gap-2">
+          <%= form.number_field :buy_below, label: "Buy below", step: "0.01", min: 0, placeholder: "Optional" %>
+          <%= form.number_field :sell_above, label: "Sell above", step: "0.01", min: 0, placeholder: "Optional" %>
+        </div>
+        <%= form.text_area :notes, label: "Notes", rows: 4, placeholder: "Why you're watching this stock" %>
+        <%= form.submit "Save" %>
+      <% end %>
+    </section>
+  </div>
+</div>

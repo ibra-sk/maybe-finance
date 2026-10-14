@@ -1,0 +1,20 @@
+<%# locals: (stock:, compact: false) %>
+
+<% low, high = stock.year_range %>
+<% position = stock.year_range_position %>
+
+<% if low && high %>
+  <div class="space-y-1" title="52-week low <%= low.format %>, high <%= high.format %>">
+    <div class="relative h-1.5 rounded-full bg-surface-inset">
+      <% if position %>
+        <span class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-inverse shadow-border-xs" style="left: <%= position %>%"></span>
+      <% end %>
+    </div>
+    <div class="flex justify-between text-xs text-secondary font-mono">
+      <span><%= compact ? low.amount.round(2) : low.format %></span>
+      <span><%= compact ? high.amount.round(2) : high.format %></span>
+    </div>
+  </div>
+<% else %>
+  <p class="text-xs text-secondary text-center">—</p>
+<% end %>

@@ -1,5 +1,5 @@
 class Family < ApplicationRecord
-  include PlaidConnectable, Syncable, AutoTransferMatchable, Subscribeable
+  include PlaidConnectable, Syncable, AutoTransferMatchable, Subscribeable, StockTrackable
 
   DATE_FORMATS = [
     [ "MM-DD-YYYY", "%m-%d-%Y" ],
@@ -25,6 +25,7 @@ class Family < ApplicationRecord
   has_many :rules, dependent: :destroy
   has_many :trades, through: :accounts
   has_many :holdings, through: :accounts
+  has_many :watchlist_items, dependent: :destroy
 
   has_many :tags, dependent: :destroy
   has_many :categories, dependent: :destroy
@@ -82,10 +83,6 @@ class Family < ApplicationRecord
     return true if uniq_currencies.count > 0 && uniq_currencies.first != self.currency
 
     false
-  end
-
-  def missing_data_provider?
-    requires_data_provider? && Provider::Registry.get_provider(:synth).nil?
   end
 
   def oldest_entry_date

@@ -1,0 +1,53 @@
+<div class="space-y-4 pb-20">
+  <header class="flex justify-between items-center text-primary font-medium">
+    <h1 class="text-xl">Stocks</h1>
+    <%= render DS::Link.new(text: "Add stock", icon: "plus", variant: "primary", href: new_stock_path, frame: :modal) %>
+  </header>
+
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <nav class="bg-container-inset rounded-lg inline-flex p-1 gap-1 text-sm font-medium">
+      <% { "all" => "All", "watching" => "Watching", "owned" => "Owned" }.each do |key, label| %>
+        <%= link_to label, stocks_path(filter: key, sort: @sort),
+                    class: class_names("px-3 py-1.5 rounded-md", @filter == key ? "bg-container text-primary shadow-border-xs" : "text-secondary hover:text-primary") %>
+      <% end %>
+    </nav>
+
+    <%= form_with url: stocks_path, method: :get, data: { controller: "auto-submit-form" } do |form| %>
+      <%= form.hidden_field :filter, value: @filter %>
+      <%= form.select :sort,
+                      [ [ "Sort by ticker", "ticker" ], [ "Sort by today's change", "change" ], [ "Sort by closest to target", "target" ] ],
+                      { selected: @sort },
+                      data: { "auto-submit-form-target": "auto" },
+                      class: "bg-container border border-secondary rounded-lg px-3 py-2 text-sm pr-7 cursor-pointer text-primary focus:outline-hidden focus:ring-0" %>
+    <% end %>
+  </div>
+
+  <% if @stocks.empty? %>
+    <div class="bg-container shadow-border-xs rounded-xl p-10 text-center space-y-2">
+      <%= icon("chart-candlestick", size: "lg", class: "mx-auto") %>
+      <p class="text-primary font-medium">
+        <%= @filter == "all" ? "No stocks yet" : "No #{@filter == "owned" ? "owned" : "watched"} stocks" %>
+      </p>
+      <p class="text-secondary text-sm">Add a ticker to follow its price, or buy shares in an investment account.</p>
+    </div>
+  <% else %>
+    <div class="bg-container-inset rounded-xl p-1 overflow-x-auto">
+      <div class="min-w-[760px]">
+        <div class="grid grid-cols-12 items-center uppercase text-xs font-medium text-secondary px-4 py-2">
+          <p class="col-span-3">Stock</p>
+          <p class="col-span-2 justify-self-end">Price</p>
+          <p class="col-span-2 justify-self-end">Today</p>
+          <p class="col-span-1 justify-self-end">30D</p>
+          <p class="col-span-2 justify-self-center">52-week range</p>
+          <p class="col-span-2 justify-self-end">Your position</p>
+        </div>
+
+        <div class="bg-container rounded-lg shadow-border-xs">
+          <%= render partial: "stocks/stock", collection: @stocks, spacer_template: "shared/ruler" %>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-xs text-secondary">Prices may be delayed up to 15 minutes. Positions converted to <%= Current.family.currency %>.</p>
+  <% end %>
+</div>

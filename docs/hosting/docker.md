@@ -135,6 +135,20 @@ Your app is now set up. You can visit it at `http://localhost:3000` in your brow
 
 If you find bugs or have a feature request, be sure to read through our [contributing guide here](https://github.com/maybe-finance/maybe/wiki/How-to-Contribute-Effectively-to-this-Project).
 
+## Auto-import bank statements
+
+MacroFinance can import QFX/OFX statements (the "Quicken" or "Microsoft Money" download in
+TD, RBC, CIBC and most other banks' online banking) as soon as they land in a folder.
+
+1. In `compose.yml`, uncomment the `volumes` and `STATEMENT_IMPORT_DIR` lines under `worker`.
+2. Create the folder next to `compose.yml` with `mkdir statements` and restart with `docker compose up -d`.
+3. Save statement downloads into that folder.
+
+The worker checks every minute. Each file goes into the matching account (or a new one),
+transactions you already have are skipped, and the account balance is set from the statement.
+Processed files are moved into `imported/`, `needs-review/` (finish it under Settings > Imports)
+or `failed/` subfolders.
+
 ## How to update your app
 
 The mechanism that updates your self-hosted Maybe app is the GHCR (Github Container Registry) Docker image that you see in the `compose.yml` file:

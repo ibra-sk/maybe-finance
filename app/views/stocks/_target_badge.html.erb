@@ -1,0 +1,8 @@
+<%# locals: (stock:) %>
+
+<% case stock.target_signal %>
+<% when :buy %>
+  <span class="whitespace-nowrap text-xs font-medium rounded-full px-2 py-0.5 bg-green-500/10 text-green-600">At buy target</span>
+<% when :sell %>
+  <span class="whitespace-nowrap text-xs font-medium rounded-full px-2 py-0.5 bg-orange-500/10 text-orange-600">At sell target</span>
+<% end %>

@@ -4,7 +4,7 @@ class Import::CleansController < ApplicationController
   before_action :set_import
 
   def show
-    redirect_to import_configuration_path(@import), alert: "Please configure your import before proceeding." unless @import.configured?
+    redirect_to import_setup_path, alert: "Please configure your import before proceeding." unless @import.configured?
 
     rows = @import.rows.ordered
 
@@ -16,6 +16,10 @@ class Import::CleansController < ApplicationController
   end
 
   private
+    def import_setup_path
+      @import.configurable? ? import_configuration_path(@import) : import_upload_path(@import)
+    end
+
     def set_import
       @import = Current.family.imports.find(params[:import_id])
     end

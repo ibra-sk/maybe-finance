@@ -6,7 +6,7 @@ require "rails/all"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
-module Maybe
+module MacroFinance
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 7.2
@@ -28,6 +28,9 @@ module Maybe
     config.i18n.fallbacks = true
 
     config.app_mode = (ENV["SELF_HOSTED"] == "true" || ENV["SELF_HOSTING_ENABLED"] == "true" ? "self_hosted" : "managed").inquiry
+
+    # AI features (chat assistant, AI rule actions) are off. Flip to re-enable; needs an LLM provider.
+    config.x.ai_enabled = false
 
     # Self hosters can optionally set their own encryption keys if they want to use ActiveRecord encryption.
     if Rails.application.credentials.active_record_encryption.present?

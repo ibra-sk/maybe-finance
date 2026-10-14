@@ -41,6 +41,9 @@ x-rails-env: &rails_env
   DB_HOST: db
   DB_PORT: 5432
   REDIS_URL: redis://redis:6379/1
+  # Alpaca market data for US stocks and ETFs (Canadian listings use Yahoo Finance)
+  ALPACA_API_KEY_ID: ${ALPACA_API_KEY_ID}
+  ALPACA_API_SECRET_KEY: ${ALPACA_API_SECRET_KEY}
 # NOTE: enabling OpenAI will incur costs when you use AI-related features in the app (chat, rules).  Make sure you have set appropriate spend limits on your account before adding this.
   OPENAI_ACCESS_TOKEN: ${OPENAI_ACCESS_TOKEN}
 
@@ -66,11 +69,15 @@ services:
     image: ghcr.io/maybe-finance/maybe:latest
     command: bundle exec sidekiq
     restart: unless-stopped
+    # Uncomment to auto-import QFX/OFX bank statements dropped into ./statements
+    # volumes:
+    #   - ./statements:/statements
     depends_on:
       redis:
         condition: service_healthy
     environment:
       <<: *rails_env
+      # STATEMENT_IMPORT_DIR: /statements
     networks:
       - maybe_net
 

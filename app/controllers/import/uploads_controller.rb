@@ -14,6 +14,8 @@ class Import::UploadsController < ApplicationController
   end
 
   def update
+    return upload_statement if @import.is_a?(StatementImport)
+
     if csv_valid?(csv_str)
       @import.account = Current.family.accounts.find_by(id: params.dig(:import, :account_id))
       @import.assign_attributes(raw_file_str: csv_str, col_sep: upload_params[:col_sep])
@@ -28,6 +30,27 @@ class Import::UploadsController < ApplicationController
   end
 
   private
+    def upload_statement
+      file = params.dig(:import, :statement_file)
+      account = Current.family.accounts.find_by(id: params.dig(:import, :account_id))
+
+      @import.upload_statement!(file&.read.to_s, account: account)
+
+      if @import.rows.empty?
+        flash.now[:alert] = "All #{@import.statement_transaction_count} transactions in this file are already imported."
+        return render :show, status: :unprocessable_entity
+      end
+
+      notice = "Found #{@import.statement_transaction_count} transactions"
+      notice += ", #{@import.skipped_count} already imported and skipped" if @import.skipped_count.positive?
+      notice += @import.account ? ". Importing into #{@import.account.name}." : ". A new account \"#{@import.statement.account_label}\" will be created."
+
+      redirect_to import_clean_path(@import), notice: notice
+    rescue StatementImport::Ofx::ParseError => e
+      flash.now[:alert] = e.message
+      render :show, status: :unprocessable_entity
+    end
+
     def set_import
       @import = Current.family.imports.find(params[:import_id])
     end
