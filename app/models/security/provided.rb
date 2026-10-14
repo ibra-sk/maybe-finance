@@ -6,7 +6,7 @@ module Security::Provided
   class_methods do
     def provider
       registry = Provider::Registry.for_concept(:securities)
-      registry.get_provider(:yahoo_finance)
+      registry.get_provider(:security_router)
     end
 
     def search_provider(symbol, country_code: nil, exchange_operating_mic: nil)
@@ -59,6 +59,20 @@ module Security::Provided
       currency: price.currency
     ) if cache
     price
+  end
+
+  # Latest delayed quote, cached to stay within the provider's rate limits. Failures are cached
+  # briefly too, so an unavailable provider doesn't slow down every page view.
+  def quote
+    return nil if offline? || provider.nil?
+
+    cache_key = [ "security_quote", id ]
+    cached = Rails.cache.read(cache_key)
+    return (cached == :unavailable ? nil : cached) unless cached.nil?
+
+    response = provider.fetch_security_quote(symbol: ticker, exchange_operating_mic: exchange_operating_mic)
+    Rails.cache.write(cache_key, response.success? ? response.data : :unavailable, expires_in: response.success? ? 15.minutes : 2.minutes)
+    response.data if response.success?
   end
 
   def import_provider_details(clear_cache: false)

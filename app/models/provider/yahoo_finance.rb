@@ -72,6 +72,25 @@ class Provider::YahooFinance < Provider
     end
   end
 
+  def fetch_security_quote(symbol:, exchange_operating_mic:)
+    with_provider_response do
+      meta = fetch_chart(symbol, exchange_operating_mic, range: "1d")["meta"]
+
+      Quote.new(
+        symbol: symbol,
+        price: meta["regularMarketPrice"],
+        previous_close: meta["chartPreviousClose"],
+        day_high: meta["regularMarketDayHigh"],
+        day_low: meta["regularMarketDayLow"],
+        year_high: meta["fiftyTwoWeekHigh"],
+        year_low: meta["fiftyTwoWeekLow"],
+        volume: meta["regularMarketVolume"],
+        currency: meta["currency"],
+        as_of: meta["regularMarketTime"] && Time.at(meta["regularMarketTime"])
+      )
+    end
+  end
+
   def fetch_security_price(symbol:, exchange_operating_mic:, date:)
     with_provider_response do
       # Look back a week so weekends and holidays resolve to the last close
@@ -154,6 +173,8 @@ class Provider::YahooFinance < Provider
         faraday.headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
         faraday.headers["Accept"] = "application/json"
         faraday.headers["Accept-Language"] = "en-US,en;q=0.9"
+        faraday.options.timeout = 10
+        faraday.options.open_timeout = 5
       end
     end
 end

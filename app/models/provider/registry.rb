@@ -40,6 +40,19 @@ class Provider::Registry
         Provider::YahooFinance.new
       end
 
+      def alpaca
+        key_id = ENV["ALPACA_API_KEY_ID"]
+        secret_key = ENV["ALPACA_API_SECRET_KEY"]
+
+        return nil unless key_id.present? && secret_key.present?
+
+        Provider::Alpaca.new(key_id:, secret_key:)
+      end
+
+      def security_router
+        Provider::SecurityRouter.new(yahoo: yahoo_finance, alpaca: alpaca)
+      end
+
       def plaid_us
         config = Rails.application.config.plaid
 
@@ -90,11 +103,11 @@ class Provider::Registry
       when :exchange_rates
         %i[frankfurter]
       when :securities
-        %i[yahoo_finance]
+        %i[security_router]
       when :llm
         %i[openai]
       else
-        %i[frankfurter yahoo_finance plaid_us plaid_eu openai]
+        %i[frankfurter security_router yahoo_finance alpaca plaid_us plaid_eu openai]
       end
     end
 end

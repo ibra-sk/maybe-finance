@@ -191,6 +191,7 @@ Rails.application.routes.draw do
   resources :other_liabilities, only: %i[new create edit update]
 
   resources :securities, only: :index
+  resources :stocks, only: %i[index show new create update destroy]
 
   resources :invite_codes, only: %i[index create]
 

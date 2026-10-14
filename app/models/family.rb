@@ -1,5 +1,5 @@
 class Family < ApplicationRecord
-  include PlaidConnectable, Syncable, AutoTransferMatchable, Subscribeable
+  include PlaidConnectable, Syncable, AutoTransferMatchable, Subscribeable, StockTrackable
 
   DATE_FORMATS = [
     [ "MM-DD-YYYY", "%m-%d-%Y" ],
@@ -25,6 +25,7 @@ class Family < ApplicationRecord
   has_many :rules, dependent: :destroy
   has_many :trades, through: :accounts
   has_many :holdings, through: :accounts
+  has_many :watchlist_items, dependent: :destroy
 
   has_many :tags, dependent: :destroy
   has_many :categories, dependent: :destroy

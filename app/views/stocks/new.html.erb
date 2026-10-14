@@ -1,0 +1,13 @@
+<%= render DS::Dialog.new do |dialog| %>
+  <% dialog.with_header(title: "Track a stock", subtitle: "Search US and Canadian stocks, ETFs and mutual funds.") %>
+
+  <% dialog.with_body do %>
+    <%= styled_form_with url: stocks_path, class: "space-y-4", data: { turbo: false } do |form| %>
+      <div class="form-field combobox">
+        <%= form.combobox :ticker, securities_path, label: "Stock", placeholder: "Search by ticker or company", required: true %>
+      </div>
+
+      <%= form.submit "Add to watchlist" %>
+    <% end %>
+  <% end %>
+<% end %>
