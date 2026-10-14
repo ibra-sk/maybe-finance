@@ -3,7 +3,8 @@
 #
 # Each file is claimed by moving it into processing/, then filed under:
 #   imported/      published, or every transaction was already in MacroFinance
-#   needs-review/  some rows are invalid; the pending import is waiting under Settings > Imports
+#   needs-review/  some rows are invalid, or an earlier import of the same account is still
+#                  unpublished; finish it under Settings > Imports and drop the file in again
 #   failed/        unreadable file or import error (see the log)
 class StatementImport::Folder
   EXTENSIONS = %w[.qfx .ofx .pdf].freeze
@@ -56,6 +57,10 @@ class StatementImport::Folder
 
         file_away(file, "imported", :imported)
       end
+    rescue StatementImport::PendingImportError => error
+      import.destroy
+      Rails.logger.warn("Statement folder import waiting for review: #{File.basename(file)}: #{error.message}")
+      file_away(file, "needs-review", :needs_review)
     rescue => error
       import&.destroy if error.is_a?(StatementImport::ParseError)
       Rails.logger.error("Statement folder import failed for #{File.basename(file)}: #{error.message}")

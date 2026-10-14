@@ -7,6 +7,17 @@
 class StatementImport < TransactionImport
   ParseError = Class.new(StandardError)
 
+  # Raised when the same bank account already has an uploaded statement that isn't published
+  # yet. Publishing both would duplicate its transactions (or create the account twice).
+  class PendingImportError < ParseError
+    attr_reader :pending_import
+
+    def initialize(pending_import)
+      @pending_import = pending_import
+      super("#{pending_import.statement.account_label} already has a statement import waiting to be published. Publish or delete it first.")
+    end
+  end
+
   attr_reader :skipped_count
 
   def statement
@@ -23,6 +34,9 @@ class StatementImport < TransactionImport
       raw = Ofx.to_utf8(raw)
       @statement = Ofx.new(raw)
     end
+
+    pending_import = pending_import_for_same_account(account)
+    raise PendingImportError.new(pending_import) if pending_import
 
     assign_attributes(
       raw_file_str: raw,
@@ -72,18 +86,10 @@ class StatementImport < TransactionImport
     def generate_rows_from_statement
       rows.destroy_all
 
-      existing = existing_transaction_keys
-      @skipped_count = 0
+      new_transactions = new_statement_transactions
+      @skipped_count = statement.transactions.size - new_transactions.size
 
-      new_rows = statement.transactions.filter_map do |txn|
-        key = [ txn.date, -txn.amount, txn.name ]
-
-        if existing[key].to_i.positive?
-          existing[key] -= 1
-          @skipped_count += 1
-          next
-        end
-
+      new_rows = new_transactions.map do |txn|
         {
           date: txn.date.iso8601,
           amount: txn.amount.to_s,
@@ -98,19 +104,51 @@ class StatementImport < TransactionImport
     end
 
     # Overlapping statement downloads are the norm, so transactions already in the account are
-    # matched by (date, amount, name) and skipped. Counts are kept so two identical purchases on
-    # the same day are both imported when only one exists. FITIDs aren't used because some
-    # banks regenerate them on every download.
-    def existing_transaction_keys
-      return {} if account.nil? || statement.transactions.empty?
+    # skipped. A transaction matches an existing one with the same date and amount; the name
+    # only breaks ties, so transactions renamed after import (by you or a rule) and descriptions
+    # that differ between QFX and PDF still match. Each existing transaction matches at most
+    # once, so two identical purchases on the same day are both kept when only one exists.
+    # FITIDs aren't used because some banks regenerate them on every download.
+    def new_statement_transactions
+      return statement.transactions if account.nil? || statement.transactions.empty?
 
       dates = statement.transactions.map(&:date)
+      existing_names = account.entries
+                              .where(entryable_type: "Transaction", date: dates.min..dates.max)
+                              .pluck(:date, :amount, :name)
+                              .group_by { |date, amount, _| [ date, amount.to_d ] }
+                              .transform_values { |matches| matches.map(&:last) }
 
-      account.entries
-             .where(entryable_type: "Transaction", date: dates.min..dates.max)
-             .pluck(:date, :amount, :name)
-             .map { |date, amount, name| [ date, amount.to_d, name ] }
-             .tally
+      # Same date, amount and name first, so ties go to the right transaction...
+      unmatched = statement.transactions.reject do |txn|
+        names = existing_names[[ txn.date, -txn.amount ]]
+        index = names&.index(txn.name)
+        names.delete_at(index) if index
+        index.present?
+      end
+
+      # ...then same date and amount, whatever the name
+      unmatched.reject do |txn|
+        names = existing_names[[ txn.date, -txn.amount ]]
+        next false if names.blank?
+
+        names.shift
+        true
+      end
+    end
+
+    # An earlier upload for the same bank account (or the chosen account) that hasn't been
+    # published yet
+    def pending_import_for_same_account(chosen_account)
+      family.imports
+            .where(type: "StatementImport", status: %i[pending importing])
+            .where.not(id: id)
+            .order(:created_at)
+            .select { |import| import.rows.exists? }
+            .find do |import|
+              (chosen_account && import.account_id == chosen_account.id) ||
+                (import.statement_key == statement_key rescue false)
+            end
     end
 
     # Reuses the account a previous import of the same bank account went into

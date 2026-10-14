@@ -68,4 +68,16 @@ class Import::UploadsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
     assert_equal "This doesn't look like an OFX/QFX file", flash[:alert]
   end
+
+  test "a second statement for an account with an unpublished import goes back to that import" do
+    pending_import = @user.family.imports.create!(type: "StatementImport")
+    pending_import.upload_statement!(file_fixture("statements/rbc_chequing.qfx").read)
+    import = @user.family.imports.create!(type: "StatementImport")
+
+    patch import_upload_url(import), params: { import: { statement_file: file_fixture_upload("statements/rbc_chequing.qfx") } }
+
+    assert_redirected_to import_url(pending_import)
+    assert_match "waiting to be published", flash[:alert]
+    assert_not Import.exists?(import.id)
+  end
 end

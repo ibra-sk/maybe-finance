@@ -46,6 +46,9 @@ class Import::UploadsController < ApplicationController
       notice += @import.account ? ". Importing into #{@import.account.name}." : ". A new account \"#{@import.statement.account_label}\" will be created."
 
       redirect_to import_clean_path(@import), notice: notice
+    rescue StatementImport::PendingImportError => e
+      @import.destroy!
+      redirect_to import_path(e.pending_import), alert: e.message
     rescue StatementImport::ParseError => e
       flash.now[:alert] = e.message
       render :show, status: :unprocessable_entity

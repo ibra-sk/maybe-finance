@@ -41,6 +41,15 @@ class StatementImport::FolderTest < ActiveSupport::TestCase
     assert_empty @family.imports.reload
   end
 
+  test "waits for review when the same account has an unpublished import" do
+    @family.imports.create!(type: "StatementImport").upload_statement!(file_fixture("statements/rbc_chequing.qfx").read)
+    drop "rbc_chequing.qfx"
+
+    assert_equal({ "rbc_chequing.qfx" => :needs_review }, @folder.import_all)
+    assert_equal 1, files_in("needs-review").size
+    assert_equal 1, @family.imports.reload.count
+  end
+
   test "imports PDF statements" do
     StatementImport::PdfText.stubs(:extract).returns(file_fixture("statements/triangle.txt").read)
     drop "triangle.qfx", as: "ctfs_statement.pdf", content: "%PDF-1.7 fake"

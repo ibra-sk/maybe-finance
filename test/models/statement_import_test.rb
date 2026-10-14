@@ -38,6 +38,38 @@ class StatementImportTest < ActiveSupport::TestCase
     assert_equal [ "PAYROLL DEPOSIT", "TIM HORTONS #1234" ], import.rows.pluck(:name).sort
   end
 
+  test "a renamed transaction is still recognized as already imported" do
+    first = upload("rbc_chequing.qfx")
+    first.publish
+    first.account.entries.transactions.find_by!(name: "PAYROLL DEPOSIT").update!(name: "Salary")
+
+    second = upload("rbc_chequing.qfx")
+
+    assert_equal first.account, second.account
+    assert_empty second.rows
+  end
+
+  test "the name breaks ties between transactions with the same date and amount" do
+    account = create_account
+    account.entries.create!(date: Date.new(2024, 3, 1), amount: 5, currency: "CAD", name: "BAKERY", entryable: Transaction.new)
+
+    import = @family.imports.create!(type: "StatementImport")
+    import.upload_statement!(ofx(%w[COFFEE BAKERY].map { |name| [ "20240301", "-5.00", name ] }), account: account)
+
+    assert_equal [ "COFFEE" ], import.rows.pluck(:name)
+  end
+
+  test "a second upload for the same account waits until the first is published" do
+    first = upload("rbc_chequing.qfx")
+
+    error = assert_raises(StatementImport::PendingImportError) { upload("rbc_chequing.qfx") }
+    assert_equal first, error.pending_import
+    assert_match "RBC Chequing ••1234 already has a statement import waiting", error.message
+
+    first.publish
+    assert_empty upload("rbc_chequing.qfx").rows
+  end
+
   test "reconciles an existing account to the statement balance, and revert removes it" do
     account = create_account
     import = upload("rbc_chequing.qfx", account: account)
@@ -79,6 +111,11 @@ class StatementImportTest < ActiveSupport::TestCase
   end
 
   private
+    def ofx(transactions)
+      trns = transactions.map { |date, amount, name| "<STMTTRN><DTPOSTED>#{date}<TRNAMT>#{amount}<NAME>#{name}</STMTTRN>" }.join
+      "<OFX><STMTRS><CURDEF>CAD<BANKACCTFROM><ACCTID>999<ACCTTYPE>CHECKING</BANKACCTFROM><BANKTRANLIST>#{trns}</BANKTRANLIST></STMTRS></OFX>"
+    end
+
     def upload_pdf(file_name)
       import = @family.imports.create!(type: "StatementImport")
       import.upload_statement!("%PDF-1.7 fake", file_name: file_name)

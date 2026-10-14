@@ -33,7 +33,8 @@ class StatementImport::PdfTest < ActiveSupport::TestCase
     assert pdf.credit_card?
     assert_equal "TD Rewards Card ••0206", pdf.account_label
     assert_equal BigDecimal("-174.25"), pdf.balance
-    assert_equal [ Date.new(2025, 12, 28), Date.new(2026, 1, 2), Date.new(2026, 1, 19) ], pdf.transactions.map(&:date)
+    # Posting dates, like OFX downloads
+    assert_equal [ Date.new(2025, 12, 29), Date.new(2026, 1, 3), Date.new(2026, 1, 19) ], pdf.transactions.map(&:date)
     assert_equal [ -45.25, 100.00, -29.00 ].map { BigDecimal(_1.to_s) }, pdf.transactions.map(&:amount)
   end
 

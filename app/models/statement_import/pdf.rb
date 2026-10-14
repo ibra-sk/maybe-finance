@@ -120,8 +120,10 @@ class StatementImport::Pdf
       closing = @text[/(?:TOTAL NEW BALANCE|Your New Balance)\s+(-?\$?#{NUMBER})/i, 1] or
         raise StatementImport::ParseError, "Couldn't find the new balance"
 
-      # Lines start with two dates; anything after the amount (side panels) is ignored
-      transaction_line = /^\s{0,6}(?<month>[A-Za-z]{3}) (?<day>\d{1,2})\s+[A-Za-z]{3} \d{1,2}\s*(?<description>.*?)\s{2,}(?<amount>-?\$?#{NUMBER})(?=\s|$)/
+      # Lines start with the transaction date and posting date; anything after the amount (side
+      # panels) is ignored. The posting date is used, as in OFX downloads, so the same purchase
+      # matches across PDF and QFX imports.
+      transaction_line = /^\s{0,6}[A-Za-z]{3} \d{1,2}\s+(?<month>[A-Za-z]{3}) (?<day>\d{1,2})\s*(?<description>.*?)\s{2,}(?<amount>-?\$?#{NUMBER})(?=\s|$)/
 
       @transactions = @text.each_line.filter_map do |line|
         m = line.match(transaction_line)
