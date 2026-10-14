@@ -30,8 +30,6 @@ Rails.application.routes.draw do
     end
   end
 
-  get "changelog", to: "pages#changelog"
-  get "feedback", to: "pages#feedback"
 
   resource :current_session, only: %i[update]
 
@@ -268,9 +266,6 @@ Rails.application.routes.draw do
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
 
   get "imports/:import_id/upload/sample_csv", to: "import/uploads#sample_csv", as: :import_upload_sample_csv
-
-  get "privacy", to: redirect("https://maybefinance.com/privacy")
-  get "terms", to: redirect("https://maybefinance.com/tos")
 
   # Defines the root path route ("/")
   root "pages#dashboard"

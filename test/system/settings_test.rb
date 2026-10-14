@@ -11,9 +11,7 @@ class SettingsTest < ApplicationSystemTestCase
       [ "Tags", tags_path ],
       [ "Categories", categories_path ],
       [ "Merchants", family_merchants_path ],
-      [ "Imports", imports_path ],
-      [ "What's new", changelog_path ],
-      [ "Feedback", feedback_path ]
+      [ "Imports", imports_path ]
     ]
   end
 
@@ -33,7 +31,6 @@ class SettingsTest < ApplicationSystemTestCase
 
   test "can update self hosting settings" do
     Rails.application.config.app_mode.stubs(:self_hosted?).returns(true)
-    Provider::Registry.stubs(:get_provider).with(:synth).returns(nil)
     open_settings_from_sidebar
     assert_selector "li", text: "Self hosting"
     click_link "Self hosting"

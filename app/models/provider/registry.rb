@@ -32,12 +32,12 @@ class Provider::Registry
         Provider::Stripe.new(secret_key:, webhook_secret:)
       end
 
-      def synth
-        api_key = ENV.fetch("SYNTH_API_KEY", Setting.synth_api_key)
+      def frankfurter
+        Provider::Frankfurter.new
+      end
 
-        return nil unless api_key.present?
-
-        Provider::Synth.new(api_key)
+      def yahoo_finance
+        Provider::YahooFinance.new
       end
 
       def plaid_us
@@ -54,10 +54,6 @@ class Provider::Registry
         return nil unless config.present?
 
         Provider::Plaid.new(config, region: :eu)
-      end
-
-      def github
-        Provider::Github.new
       end
 
       def openai
@@ -92,13 +88,13 @@ class Provider::Registry
     def available_providers
       case concept
       when :exchange_rates
-        %i[synth]
+        %i[frankfurter]
       when :securities
-        %i[synth]
+        %i[yahoo_finance]
       when :llm
         %i[openai]
       else
-        %i[synth plaid_us plaid_eu github openai]
+        %i[frankfurter yahoo_finance plaid_us plaid_eu openai]
       end
     end
 end

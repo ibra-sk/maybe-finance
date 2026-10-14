@@ -1,4 +1,4 @@
-module Maybe
+module MacroFinance
   class << self
     def version
       Semver.new(semver)

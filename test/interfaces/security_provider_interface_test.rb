@@ -14,7 +14,7 @@ module SecurityProviderInterfaceTest
     end
   end
 
-  test "fetches paginated securities prices" do
+  test "fetches securities prices" do
     aapl = securities(:aapl)
 
     VCR.use_cassette("#{vcr_key_prefix}/security_prices") do
@@ -27,7 +27,7 @@ module SecurityProviderInterfaceTest
 
       assert response.success?
       assert response.data.first.date.is_a?(Date)
-      assert_equal 147, response.data.count # Synth won't return prices on weekends / holidays, so less than total day count of 213
+      assert_equal 147, response.data.count # trading days only, no weekends / holidays
     end
   end
 
@@ -56,8 +56,6 @@ module SecurityProviderInterfaceTest
       assert_equal "AAPL", info.symbol
       assert_equal "Apple Inc.", info.name
       assert_equal "common stock", info.kind
-      assert info.logo_url.present?
-      assert info.description.present?
     end
   end
 

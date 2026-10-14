@@ -75,4 +75,7 @@ Rails.application.configure do
   config.autoload_paths += %w[test/support]
 
   config.action_mailer.default_url_options = { host: "example.com" }
+
+  # Keep the dormant AI code paths covered by tests.
+  config.x.ai_enabled = true
 end

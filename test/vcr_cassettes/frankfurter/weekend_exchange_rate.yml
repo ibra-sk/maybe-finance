@@ -1,0 +1,55 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://api.frankfurter.dev/v1/2024-01-06?base=USD&symbols=CAD
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Faraday v2.13.2
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Wed, 14 Oct 2026 18:10:22 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Cache-Control:
+      - public, max-age=86400
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Vary:
+      - Origin
+      X-Robots-Tag:
+      - noindex
+      Deprecation:
+      - "@1779103800"
+      Link:
+      - <https://api.frankfurter.dev/v2/rates>; rel="successor-version"
+      Etag:
+      - W/"323c5117b1edc8ae79283a7eb1ff9201"
+      Cf-Cache-Status:
+      - MISS
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=jUzM8fVWTyrVNb6qjNCHlQ8llncS7hZrdH4jHUjNNLM9x35%2FsHGq%2BKIf%2BIoQTJA3S7TF0aoc6a4q%2F4XvEeYaKIWlXWExHbgw0ldLvrRFogcP%2BueQejYGl7szZDkl44ZzJUHqGoMkfGUs8loy07DyXHQ%3D"}]}'
+      Server:
+      - cloudflare
+      Cf-Ray:
+      - a4a88a58add7ab8d-YYZ
+    body:
+      encoding: ASCII-8BIT
+      string: '{"amount":1.0,"base":"USD","date":"2024-01-05","rates":{"CAD":1.3369}}'
+  recorded_at: Wed, 14 Oct 2026 18:10:22 GMT
+recorded_with: VCR 6.3.1
