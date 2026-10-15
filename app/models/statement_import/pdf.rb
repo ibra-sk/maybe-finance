@@ -17,6 +17,8 @@ class StatementImport::Pdf
   FILE_NAME_LINE = /\A# file: (.*)\n/
 
   NUMBER = /\d{1,3}(?:,\d{3})*\.\d{2}/
+  # TD marks an overdrawn (negative) balance with a trailing "OD"
+  BALANCE = /#{NUMBER}(?:\s+OD)?/
   MONTHS = Date::ABBR_MONTHNAMES.compact.each_with_index.to_h { |name, i| [ name.upcase, i + 1 ] }
 
   attr_reader :bank, :account_id, :account_type, :currency, :balance, :balance_date, :transactions
@@ -47,6 +49,11 @@ class StatementImport::Pdf
     account_type == "CREDITCARD"
   end
 
+  # The kind of account without its number, for matching statements that lack one
+  def account_kind
+    @kind || @product
+  end
+
   def account_label
     [ @product, account_id && "••#{account_id.last(4)}" ].compact.join(" ")
   end
@@ -56,8 +63,17 @@ class StatementImport::Pdf
     # balance is printed after the last transaction of each day.
     def parse_td_bank_account
       @bank = "TD"
-      @account_type = { /SAVINGS/i => "SAVINGS", /CHEQUING|CHECKING/i => "CHECKING" }.find { |pattern, _| @file_name.match?(pattern) }&.last
+      # TD's download file name has the account type and number. The (abbreviated) account type
+      # printed on the statement, e.g. "UNLIMITED" or "EVRY DAY SAV", identifies the account when
+      # the file was renamed, e.g. after unlocking it.
+      type_name = td_account_type_name
+      @account_type = if "#{type_name} #{@file_name}".match?(/SAV/i)
+        "SAVINGS"
+      elsif type_name || @file_name.match?(/CHEQ|CHECK/i)
+        "CHECKING" # chequing accounts and TD's bank plans
+      end
       @product = "TD #{{ "SAVINGS" => "Savings", "CHECKING" => "Chequing" }.fetch(@account_type, "Account")}"
+      @kind = "TD #{type_name.squish.upcase}" if type_name
       @account_id = @file_name[/_(\d{4}-\d{7})_/, 1]
 
       period = @text.match(/([A-Z]{3}) (\d{1,2})\/(\d{2}) - ([A-Z]{3}) (\d{1,2})\/(\d{2})/) or
@@ -72,11 +88,11 @@ class StatementImport::Pdf
         if (header = line.match(/(Withdrawals)\s+(Deposits)/))
           # Amounts are right-aligned under their headings
           split_column = (header.end(1) + header.end(2)) / 2
-        elsif (m = line.match(/^\s*STARTING BALANCE\s+[A-Z]{3}\d{2}\s+(#{NUMBER})\s*$/))
-          opening ||= running = amount(m[1])
-        elsif (m = line.match(/^\s*CLOSING BALANCE\s+[A-Z]{3}\d{2}\s+(#{NUMBER})\s*$/))
-          closing = amount(m[1])
-        elsif split_column && (m = line.match(/^\s?(?<description>\S.*?)\s{2,}(?<amount>#{NUMBER})\s+(?<date>[A-Z]{3}\d{2})(?:\s+(?<balance>#{NUMBER}))?\s*$/))
+        elsif (m = line.match(/^\s*STARTING BALANCE\s+[A-Z]{3}\d{2}\s+(?<balance>#{BALANCE})\s*$/))
+          opening ||= running = td_balance(m[:balance])
+        elsif (m = line.match(/^\s*CLOSING BALANCE\s+[A-Z]{3}\d{2}\s+(?<balance>#{BALANCE})\s*$/))
+          closing = td_balance(m[:balance])
+        elsif split_column && (m = line.match(/^\s?(?<description>\S.*?)\s{2,}(?<amount>#{NUMBER})\s+(?<date>[A-Z]{3}\d{2})(?:\s+(?<balance>#{BALANCE}))?\s*$/))
           raise StatementImport::ParseError, "Transactions start before the starting balance" if running.nil?
 
           withdrawal = m.end(:amount) < split_column
@@ -90,8 +106,8 @@ class StatementImport::Pdf
             memo: nil
           )
 
-          if m[:balance] && amount(m[:balance]) != running
-            raise StatementImport::ParseError, "Running balance on #{m[:date]} doesn't match the transactions (off by #{(amount(m[:balance]) - running).abs})"
+          if m[:balance] && td_balance(m[:balance]) != running
+            raise StatementImport::ParseError, "Running balance on #{m[:date]} doesn't match the transactions (off by #{(td_balance(m[:balance]) - running).abs})"
           end
         end
       end
@@ -163,6 +179,27 @@ class StatementImport::Pdf
 
     def month(name)
       MONTHS.fetch(name[0, 3].upcase) { raise StatementImport::ParseError, "Unknown month #{name}" }
+    end
+
+    # The value printed under the "Account Type" heading, if it's readable text
+    def td_account_type_name
+      lines = @text.lines
+      header_index = lines.index { |line| line.include?("Account Type") } or return nil
+      column = lines[header_index].index("Account Type")
+
+      lines[header_index + 1, 4].each do |line|
+        start = line.index(/\S/, [ column - 12, 0 ].max)
+        next if start.nil? || start > column + 12
+
+        value = line[start..].split(/\s{2,}/).first.strip
+        return value if value.match?(/\A[A-Za-z][A-Za-z .&'-]*\z/)
+      end
+
+      nil
+    end
+
+    def td_balance(text)
+      text.end_with?("OD") ? -amount(text.delete_suffix("OD").strip) : amount(text)
     end
 
     def amount(text)

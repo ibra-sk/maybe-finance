@@ -100,6 +100,17 @@ class StatementImportTest < ActiveSupport::TestCase
     assert_empty second.rows
   end
 
+  test "a renamed copy of a TD PDF goes into the same account as the original download" do
+    StatementImport::PdfText.stubs(:extract).returns(file_fixture("statements/td_chequing.txt").read)
+
+    original = upload_pdf("TD_UNLIMITED_CHEQUING_ACCOUNT_1234-5678901_Apr_30-May_29_2026.pdf")
+    original.publish
+
+    renamed = upload_pdf("statement-unlocked.pdf")
+    assert_equal original.account, renamed.account
+    assert_empty renamed.rows
+  end
+
   test "a later statement for the same bank account goes into the same account" do
     first = upload("rbc_chequing.qfx")
     first.publish

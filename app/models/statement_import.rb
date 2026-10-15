@@ -147,7 +147,7 @@ class StatementImport < TransactionImport
             .select { |import| import.rows.exists? }
             .find do |import|
               (chosen_account && import.account_id == chosen_account.id) ||
-                (import.statement_key == statement_key rescue false)
+                same_bank_account?(import)
             end
     end
 
@@ -158,7 +158,7 @@ class StatementImport < TransactionImport
             .where.not(id: id)
             .where.not(account_id: nil)
             .order(created_at: :desc)
-            .find { |import| import.statement_key == statement_key rescue false }
+            .find { |import| same_bank_account?(import) }
             &.account
     end
 
@@ -220,7 +220,18 @@ class StatementImport < TransactionImport
     end
 
   protected
-    def statement_key
-      [ statement.bank, statement.account_id.presence || statement.account_label ]
+    # Same bank and account number, or, when either statement lacks the number (e.g. a renamed
+    # TD PDF), the same kind of account
+    def same_bank_account?(other)
+      mine, theirs = statement, other.statement
+      return false unless mine.bank == theirs.bank
+
+      if mine.account_id.present? && theirs.account_id.present?
+        mine.account_id == theirs.account_id
+      else
+        mine.account_kind == theirs.account_kind
+      end
+    rescue StatementImport::ParseError
+      false
     end
 end

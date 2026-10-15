@@ -13,11 +13,25 @@ class StatementImport::PdfTest < ActiveSupport::TestCase
     assert_equal [ "COFFEE SHOP #12 _F", Date.new(2026, 5, 2) ], [ pdf.transactions.first.name, pdf.transactions.first.date ]
   end
 
-  test "falls back to a generic label without TD's download file name" do
-    pdf = parse("td_chequing.txt", file_name: "statement.pdf")
+  test "identifies a renamed TD statement from the account type it prints" do
+    pdf = parse("td_chequing.txt", file_name: "statement-unlocked.pdf")
 
-    assert_equal "TD Account", pdf.account_label
-    assert_nil pdf.account_type
+    assert_equal "TD Chequing", pdf.account_label
+    assert_equal "CHECKING", pdf.account_type
+    assert_equal "TD UNLIMITED CHEQUING", pdf.account_kind
+  end
+
+  test "reads overdrawn (OD) TD balances as negative" do
+    text = fixture("td_chequing.txt")
+             .sub(/500\.00$/, "500.00 OD")      # starting balance
+             .sub(/ 400\.00$/, " 600.00 OD")    # after two withdrawals
+             .gsub(/1,400\.00$/, "400.00")      # after the deposit, and balance forward
+             .gsub(/1,384\.05$/, "384.05")      # after the fee, and closing balance
+
+    pdf = StatementImport::Pdf.new(StatementImport::Pdf.with_file_name(text, "x.pdf"))
+
+    assert_equal BigDecimal("384.05"), pdf.balance
+    assert_equal 4, pdf.transactions.size
   end
 
   test "rejects a TD statement whose running balance doesn't match" do

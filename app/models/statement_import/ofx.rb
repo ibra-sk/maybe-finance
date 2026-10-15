@@ -55,6 +55,11 @@ class StatementImport::Ofx
     account_type == "CREDITCARD"
   end
 
+  # The kind of account without its number, e.g. "RBC Chequing"
+  def account_kind
+    account_label.sub(/ ••\w+\z/, "")
+  end
+
   # Shown to the user and used to name accounts created from a statement, e.g. "RBC Chequing ••1234"
   def account_label
     type = { "CHECKING" => "Chequing", "SAVINGS" => "Savings", "CREDITCARD" => "Credit Card", "CREDITLINE" => "Line of Credit" }
