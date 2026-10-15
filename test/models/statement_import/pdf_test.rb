@@ -38,7 +38,9 @@ class StatementImport::PdfTest < ActiveSupport::TestCase
     assert_equal [ -45.25, 100.00, -29.00 ].map { BigDecimal(_1.to_s) }, pdf.transactions.map(&:amount)
   end
 
-  test "parses a Triangle Mastercard statement, ignoring side panels and wrapped lines" do
+  # The fixture also itemizes the hardware store purchase in a "Details of your Canadian Tire
+  # store purchases" section, which must not be counted a second time
+  test "parses a Triangle Mastercard statement, ignoring side panels, wrapped lines and itemized purchases" do
     pdf = parse("triangle.txt", file_name: "statement.pdf")
 
     assert_equal "Triangle Mastercard ••4321", pdf.account_label

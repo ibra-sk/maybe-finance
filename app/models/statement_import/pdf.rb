@@ -125,7 +125,11 @@ class StatementImport::Pdf
       # matches across PDF and QFX imports.
       transaction_line = /^\s{0,6}[A-Za-z]{3} \d{1,2}\s+(?<month>[A-Za-z]{3}) (?<day>\d{1,2})\s*(?<description>.*?)\s{2,}(?<amount>-?\$?#{NUMBER})(?=\s|$)/
 
-      @transactions = @text.each_line.filter_map do |line|
+      # Triangle statements end with "Details of your Canadian Tire store purchases", which
+      # itemizes purchases already listed above, so reading stops there
+      transactions_text = @text.split(/^\s*Details of your Canadian Tire .*purchases\s*$/i).first
+
+      @transactions = transactions_text.each_line.filter_map do |line|
         m = line.match(transaction_line)
         next unless m && MONTHS.key?(m[:month].upcase)
 

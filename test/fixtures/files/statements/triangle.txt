@@ -12,5 +12,14 @@ Purchases - Card #5300 12XX XXXX 4321
    Mar 17              Mar 17 TRIANGLE REWARDS (EARN                                                              18.40
                               PTS.**)
  Total purchases                                                                                                $118.40
+   For item details, see the "Details of your Canadian Tire store purchases" section.
    Mar 17              Mar 17 INTEREST CHARGES                                                                     2.00
 Purchases                                                25.99%                                     2.00
+
+         Details of your Canadian Tire store purchases
+         The total of each transaction is included in the Purchases section
+TRANSACTION   POSTING
+DATE          DATE      QUANTITY   DETAILS                                   AMOUNT ($)
+Mar 01        Mar 02           1   HAMMER 16 OZ                                   60.00
+Mar 01        Mar 02           2   SCREWS BOX                                     40.00
+                                   Total for transaction                     $100.00
