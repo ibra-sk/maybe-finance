@@ -24,7 +24,7 @@ class StatementImport::PdfTest < ActiveSupport::TestCase
   test "reads overdrawn (OD) TD balances as negative" do
     text = fixture("td_chequing.txt")
              .sub(/500\.00$/, "500.00 OD")      # starting balance
-             .sub(/ 400\.00$/, " 600.00 OD")    # after two withdrawals
+             .sub(/ 400\.00$/, " 600.00OD")     # after two withdrawals (TD sometimes omits the space)
              .gsub(/1,400\.00$/, "400.00")      # after the deposit, and balance forward
              .gsub(/1,384\.05$/, "384.05")      # after the fee, and closing balance
 

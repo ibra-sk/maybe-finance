@@ -15,6 +15,10 @@
           <%= tag.p converted_balance_money.format, class: "text-sm font-medium text-secondary" %>
         <% end %>
       </div>
+
+      <% if account.depository? && (account.depository.overdraft_limit_money || account.depository.overdraft_used_money) %>
+        <%= render "depositories/overdraft_summary", depository: account.depository %>
+      <% end %>
     </div>
 
     <%= form_with url: account_path(account), method: :get, data: { controller: "auto-submit-form" } do |form| %>

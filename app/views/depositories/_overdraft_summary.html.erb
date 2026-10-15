@@ -1,0 +1,28 @@
+<%# locals: (depository:) %>
+
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+  <% if depository.available_funds_money %>
+    <p class="text-secondary">
+      Available <span class="font-medium text-primary font-mono"><%= depository.available_funds_money.format %></span>
+      (includes <%= depository.overdraft_limit_money.format %> overdraft)
+    </p>
+  <% end %>
+
+  <% if (used = depository.overdraft_used_money) %>
+    <% if depository.over_overdraft_limit? %>
+      <p class="flex items-center gap-1 text-destructive">
+        <%= icon "triangle-alert", size: "sm", color: "current" %>
+        <% if depository.overdraft_limit_money %>
+          Over the overdraft limit by <%= (used - depository.overdraft_limit_money).format %>
+        <% else %>
+          Overdrawn by <%= used.format %>. Set the overdraft limit in the account settings.
+        <% end %>
+      </p>
+    <% else %>
+      <p class="flex items-center gap-1 text-warning">
+        <%= icon "circle-alert", size: "sm", color: "current" %>
+        Using <%= used.format %> of <%= depository.overdraft_limit_money.format %> overdraft
+      </p>
+    <% end %>
+  <% end %>
+</div>

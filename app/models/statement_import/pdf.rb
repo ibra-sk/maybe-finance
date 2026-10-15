@@ -17,8 +17,8 @@ class StatementImport::Pdf
   FILE_NAME_LINE = /\A# file: (.*)\n/
 
   NUMBER = /\d{1,3}(?:,\d{3})*\.\d{2}/
-  # TD marks an overdrawn (negative) balance with a trailing "OD"
-  BALANCE = /#{NUMBER}(?:\s+OD)?/
+  # TD marks an overdrawn (negative) balance with a trailing "OD", with or without a space
+  BALANCE = /#{NUMBER}(?:\s*OD)?/
   MONTHS = Date::ABBR_MONTHNAMES.compact.each_with_index.to_h { |name, i| [ name.upcase, i + 1 ] }
 
   attr_reader :bank, :account_id, :account_type, :currency, :balance, :balance_date, :transactions
